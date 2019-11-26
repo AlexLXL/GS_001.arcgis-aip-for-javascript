@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>Intro to MapView - Create a 2D map - 4.7</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <!-- esri.css样式表主要用于ESRI提供的小部件与组件（例如地图、信息框等） -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+    <script src="https://js.arcgis.com/4.7/"></script>
+
+    <!--  此外还可以引用Dojo提供的样式表，Dojo提供了四组样式，分别是claro、tundra、soria和nihilo，每种是一组定义用户界面的字体、颜色与大小的样式。它们的引用如下： -->
+    <link rel="stylesheet" href="http://localhost/arcgis3.24/dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" href="http://localhost/arcgis3.24/dijit/themes/tundra/tundra.css" />
+    <link rel="stylesheet" href="http://localhost/arcgis3.24/dijit/themes/nihilo/nihilo.css" />
+    <link rel="stylesheet" href="http://localhost/arcgis3.24/dijit/themes/soria/soria.css" />
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "dojo/domReady!"            // 至于"dojo/domReady!"这个，则是dojo框架的一个特殊类（模块），所以会在"domReady"后加一个叹号，这是dojo的一个插件，代表DOM加载完成后再执行后面的代码。
+        ], function (Map, MapView) {
+            var map = new Map({         // 数据
+                basemap: "streets"          //底图:街道图
+            });
+
+            var view = new MapView({    //视图(2D)
+                container: "viewDiv",       //利用id选择器
+                map: map,
+                zoom: 4,
+                scale: 50000000,            //  比例尺
+                center: [15, 65]            // 经度longitude, 纬度latitude
+            });
+        });
+        // ArcGIS API for JavaScript包含了许多“资源”，这些“资源”是按用途组织的，
+        //例如：esri/map用于地图、几何对象，图形与符号，esri/tasks/locator用于地理编码。
+        //若要在应用程序中使用这些资源，需要先调用Dojo提供的全局函数require进行加载。
+    </script>
+    <!-- 
+        SceneView和MapView都继承自View类。
+        虽然我们知道Js是弱类型的语言，但是Dojo帮我们做了一些面向对象的工作。
+        在这里，我沿用更广泛的说法，那就是用“类”这个称呼去替代官方的“模块”这个称呼，其
+        实MapView、Map、SceneView都是模块，它们存在于js包里面。 
+    -->
+    <!-- 
+        中工水务定义模块的时候是吧require改成define
+     -->
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+
+</html>
