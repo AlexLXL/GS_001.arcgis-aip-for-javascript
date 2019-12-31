@@ -977,7 +977,8 @@ instance.refreshFacilityLayer = function (map, cb) {
   } else {
     cb();
   }
-}
+};
+// 给底图添加layer
 instance.processBaseMapConfig = function (map, baseMaps) {
   var cacheLayers = {};
   baseMaps.forEach(function (baseMap) {
