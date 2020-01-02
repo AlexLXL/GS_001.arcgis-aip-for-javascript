@@ -1,0 +1,19 @@
+<div id="wrapper">
+    <div class="layerBox">
+        <div class="layer-title">
+            <i class="el-icon-menu icon-setting">
+            </i><span class="layer-text">图层</span>
+        </div>
+        <el-tree
+                class="layerTree"
+                :data="legendList"
+                show-checkbox
+                node-key="id"
+                :props="defaultProps"
+                :default-expanded-keys="[1]"
+                :default-checked-keys="checkList"
+                :render-content="renderContent"
+                @check-change="handleCheckChange">
+        </el-tree>
+    </div>
+</div>

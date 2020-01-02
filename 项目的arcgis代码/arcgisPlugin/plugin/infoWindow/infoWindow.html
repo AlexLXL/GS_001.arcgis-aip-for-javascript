@@ -1,0 +1,29 @@
+<div class="infoWindow">
+    <!--相当于popup-->
+
+    <div class="infoWindowItem"
+         v-for="(infoBox,index) in infoBoxes"
+         :style="infoBox.style" :id="'infoBox-'+index"
+         v-show="infoBox.infoBoxVisible"
+         @click="openSiteplan(infoBox)">
+        <!--点击事件-->
+        <div class="title">
+            <span>{{infoBox.name}}</span>
+            <i class="el-icon-close" @click.stop="infoBox.infoBoxVisible=false"></i>
+        </div>
+        <div class="item">
+            <span class="content name">占地面积：</span>
+            <span class="content">{{infoBox.area}}ha</span>
+        </div>
+        <div class="item">
+            <span class="content name">现状规模：</span>
+            <span class="content">{{infoBox.scaleNow}}万m³/d</span>
+        </div>
+        <div class="item">
+            <span class="content name">规划规模：</span>
+            <span class="content">{{infoBox.scalePlan}}万m³/d</span>
+        </div>
+        <span class="bot"></span>
+        <span class="top"></span>
+    </div>
+</div>

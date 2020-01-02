@@ -1,0 +1,64 @@
+<div class='mapContainer'>
+    <cesc-map ref="baseMap"></cesc-map>
+    <!--<div id="draw-point" class="esri-widget-button esri-widget esri-interactive">-->
+    <!--<span class=esri-icon-map-pin></span>-->
+    <!--</div>-->
+    <!--<div id="draw-polygon" class="esri-widget-button esri-widget esri-interactive">-->
+    <!--<span class=esri-icon-polygon></span>-->
+    <!--</div>-->
+    <div id="toolBar" v-show="showtools"></div>
+    <div id="mapType" v-show="showtools"></div>
+    <water-purify-factory ref="waterPurifyFactory"></water-purify-factory>
+    <command-center></command-center>
+    <!--<layer-list ref="mapLegend"></layer-list>-->
+    <!--<flex-map-legend ref="mapLegend"></flex-map-legend>
+    <div class="control-search" >
+        <el-button @click="toggleSearch"  icon="el-icon-search" ></el-button>
+    </div>
+    <div class="control-draw" >
+        <el-button type="primary" icon="edit" @click="drawPolygonInMap"></el-button>
+    </div>
+    <div class="control-deleteDraw" >
+        <el-button type="primary" icon="el-icon-delete" @click="deleteDrawMap"></el-button>
+    </div>
+    <div class="control-cancelDraw" >
+        <el-button type="primary" @click="cancelDraw">取消画图</el-button>
+    </div>
+    <div class="control-addLayer" >
+        <el-button type="primary" @click="addOrDeleteLayer">增删单个图层</el-button>
+    </div>
+    <div class="control-addMoreLayer" >
+        <el-button type="primary" @click="addOrDeleteMoreLayer">增删多个图层</el-button>
+    </div>
+    <div class="control-grid" >
+        <el-button type="primary" @click="addOrDeleteGrid">增删网格图</el-button>
+    </div>
+    <div class="control-center" >
+        <el-button type="primary" @click="setMapCenter">设置中心点</el-button>
+    </div>
+    <div class="control-line" >
+        <el-button type="primary" @click="addOrDeleteLine">增删线条</el-button>
+    </div>
+    <div class="control-refresh" >
+        <el-button type="primary" @click="refreshMap">刷新地图</el-button>
+    </div>
+    <div class="control-addPoint" >
+        <el-button type="primary" icon="el-icon-plus" @click="addPoints">画点</el-button>
+    </div>
+    <div class="control-delPoint" >
+        <el-button type="primary"  @click="deletePoints">删除添加点</el-button>
+    </div>
+    <div class="control-addLine" >
+        <el-button type="primary" icon="el-icon-plus" @click="addLines">画线</el-button>
+    </div>
+    <div class="control-delLine" >
+        <el-button type="primary"  @click="deleteLines">删除添加线</el-button>
+    </div>-->
+    <!-- 右边菜单-->
+    <!--right panel start-->
+    <!-- <right-panel ref='rightPanel'></right-panel> -->
+    <!--    <right-panel-complaint ref='rightPanelComplaint'></right-panel-complaint>-->
+    <!--right panel end-->
+    <!--dialog start-->
+    <info-window ref="infoWindow"></info-window>
+</div>
