@@ -1,0 +1,108 @@
+<!--showList控制列表是否显示，通常用于多层表时-->
+<div v-show="showList">
+    <div class="manage-tabel">
+        <!--右侧搜索栏-->
+    </div>
+    <!--列表控件（element table）-->
+    <el-table
+            class="tabelManage"
+            :data="tableData"
+            border
+            tooltip-effect="dark"
+            style="width: 100%"
+            @selection-change="tableSelectionChange">
+        <!--check box列-->
+        <el-table-column
+                type="selection"
+                width="55">
+        </el-table-column>
+        <!--以下是列表的列，主要的属性有：prop=json数据中的属性名称，label=界面显示的列名称-->
+        <el-table-column
+                prop="id"
+                label="id">
+        </el-table-column>
+        <el-table-column
+                prop="factoryId"
+                label="厂区">
+        </el-table-column>
+        <el-table-column
+                prop="carryColor"
+                label="填充颜色">
+        </el-table-column>
+        <el-table-column
+            prop="carryBorderColor"
+            label="边框颜色">
+        </el-table-column>
+        <!--操作列在最后一列，放一些功能按钮
+        具体使用方式参考element table的自定义列模板-->
+        <el-table-column
+                fixed="right"
+                label="操作"
+                width="170">
+            <template slot-scope="scope">
+                <!--如何获取当前行的字段值？参考下面的click事件，其中scope.row可以获取当前行的数据-->
+                <el-button size="small" @click="newArea(scope.row)">新增纳污范围</el-button>
+                <el-button size="small" @click="editArea(scope.row)">编辑纳污范围</el-button>
+                <!--编辑-->
+                <i class="el-icon-edit" title="编辑" @click="edit(scope.row.id,'yes')"></i>
+                <!--删除-->
+                <i class="el-icon-delete" title="删除" @click="deleteOne(scope.row.id)"></i>
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--列表下方-->
+    <div class="manage-tabel-btn-group">
+        <!--列表左下方功能按钮-->
+        <!--新增-->
+        <el-button type="primary" icon="el-icon-plus" title="新增" @click="add"></el-button>
+        <!--删除（批量）-->
+        <el-button type="primary" icon="el-icon-delete" title="删除" @click="del"></el-button>
+        <!--分页控件，具体用法参考element的Pagination控件-->
+        <span class="elm-page" v-show="pagination">
+                   <el-pagination
+                           @size-change="paginationSizeChange"
+                           @current-change="paginationCurrentChange"
+                           :current-page.sync="currentPage"
+                           :page-sizes="pageSizes"
+                           :page-size="pageSize"
+                           :total="totalRecord"
+                           :layout="paginationLayout">
+                   </el-pagination>
+                   </span>
+    </div>
+    <!--录入表单，弹窗使用了element的dialog控件-->
+    <el-dialog
+            :title="listTitle"
+            :visible.sync="showFormState"
+            size="small">
+        <!--当前编辑实体是变量currentEntity，rules是表单验证规则配置（用法参考element的form的表单验证）-->
+        <el-form ref="formMain" :model="currentEntity" :rules="rules"
+                 label-width="80px">
+            <el-form-item label="厂区">
+                <!--下拉选择（element select）demo-->
+                <!--此例使用了element select容器，其属性value代表绑定值，datas代表全部选项-->
+                <el-select v-model="elSelectContainerFactory.value"
+                           placeholder="" style="width: 100%;">
+                    <!--选择项的绑定，其中有属性key（一般跟value一样），label（显示的内容），value（代码返回的值）-->
+                    <el-option
+                            v-for="item in elSelectContainerFactory.datas"
+                            :key="item.id"
+                            :label="item.name"
+                            :value="item.id">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="填充颜色">
+                <el-input v-model="currentEntity.carryColor"></el-input>
+            </el-form-item>
+            <el-form-item label="边框颜色">
+                <el-input v-model="currentEntity.carryBorderColor"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <!--保存按钮-->
+                <el-button type="primary" @click="submit('business')">保存</el-button>
+                <el-button @click="hideForm">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+</div>
