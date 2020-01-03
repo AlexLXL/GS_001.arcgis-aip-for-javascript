@@ -1347,9 +1347,10 @@ export default {
         'esri/geometry/Extent',                 // 边界框的最小和最大X和Y坐标。范围用于描述MapView的可见部分
         'esri/geometry/Point',                  // 创建点
         'esri/geometry/Polyline',               // 创建线
+        'esri/geometry/Circle',                // 创建圆
         'esri/geometry/Polygon',                // 创建几何图形
         'esri/Graphic',                         // 创建图形并分配其几何形状，符号和属性（用于创建上面的点，线，面，具体可看第六点:https://developers.arcgis.com/javascript/latest/sample-code/intro-graphics/index.html）
-
+        
         'esri/Color',
         'esri/layers/GraphicsLayer',
 
@@ -1372,17 +1373,31 @@ export default {
         // 没用过，详细：https://codepen.io/pen?editors=1000
         "esri/tasks/IdentifyTask",              // 识别操作
         "esri/tasks/support/IdentifyParameters",// 识别操作的参数
+        "esri/tasks/QueryTask",              // 查询操作
+        "esri/tasks/support/Query",         // 查询操作的参数
 
         "esri/config",
         "esri/geometry/geometryEngine",         // 一种客户端几何引擎，用于测试，测量和分析两个或多个2D几何之间的空间关系
         "esri/geometry/ScreenPoint",
         "dojo/_base/lang",
-        "esri/widgets/Sketch/SketchViewModel"
+        "esri/widgets/Sketch/SketchViewModel",   // 画图的
+
+        "dojo/_base/array",
+        "esri/views/2d/draw/Draw",
+        "esri/geometry/support/geodesicUtils",  // 此类对地球和70多个非地球球体执行大地测量。方法包括测地线长度，面积，点距和点对点计算。
+        "esri/geometry/support/webMercatorUtils", // 将Web墨卡托坐标转换为地理坐标，反之亦然。
+        "esri/layers/FeatureLayer",             // FeatureLayer是可以从地图服务或要素服务创建的单个图层
+        "esri/identity/IdentityManager",    // 身份管理器--使用基于令牌的身份验证来保护ArcGIS Server资源。
+        "esri/identity/ServerInfo",
+        "esri/tasks/FindTask",      // 根据字符串值搜索ArcGIS Server REST API公开的地图服务。搜索可以在单个层的单个字段上，在一个层的多个字段上或在多个层的多个字段上进行。
+        "esri/tasks/support/FindParameters",//使用FindParameters设置任务的参数。结果将是FindResult的实例。
+        "esri/widgets/Compass"    // 小部件-指北针
       ], function (arcgisMap,
                    arcgisPoint,
                    arcgisExtent,
                    arcgisPolygon,
                    arcgisPolyline,
+                   arcgisCircle,
                    arcgisGraphic,
                    arcgisColor,
                    arcgisFont,
@@ -1417,6 +1432,7 @@ export default {
         instance.Extent = arcgisExtent;
         instance.Polygon = arcgisPolygon;
         instance.Polyline = arcgisPolyline;
+        instance.Circle = arcgisCircle;
         instance.Graphic = arcgisGraphic;
         instance.Color = arcgisColor;
         instance.Font = arcgisFont;
