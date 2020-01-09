@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- 引入elementui样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入jquery -->
+    <script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.js"></script>
+</head>
+<body>
+    <div id="app">
+        <el-tree
+            :data="data6"
+            :props="defaultProps"
+            node-key="id"
+            default-expand-all
+            @node-drag-start="handleDragStart"
+            @node-drag-enter="handleDragEnter"
+            @node-drag-leave="handleDragLeave"
+            @node-drag-over="handleDragOver"
+            @node-drag-end="handleDragEnd"
+            @node-drop="handleDrop"
+            :allow-drop="allowDrop"
+            :allow-drag="allowDrag">
+        </el-tree>
+    </div>
+    
+
+    <!-- 引入vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- 引入elementui -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    
+    <!-- jsonp引入本地json文件 -->
+    <!-- jsonp解决跨域问题：http://www.luyixian.cn/javascript_show_166469.aspx -->
+    <script>
+        var globalData = ""
+      
+        //回调函数
+        function train (data){ 
+            globalData = data;
+            globalData.forEach((item) =>　{
+                if(item.url){
+                    item.name = item.name + ' ----- ' + item.funId + ' ----- ' + item.type + ' ----- ' + item.url
+                }else{
+                    item.name = item.name + ' ----- ' + item.funId + ' ----- ' + item.type
+                }
+
+                item.children.forEach((item) => {
+                    // while(item.name.length < 10){
+                    //     item.name += "一"
+                    // }
+                    // while(item.funId.length < 20){
+                    //     item.funId += "ˉ"
+                    // }
+                    // while(item.type.length < 12){
+                    //     item.type += "ˉ"
+                    // }
+                    item.name = item.name + ' ----- ' + item.funId + ' ----- ' + item.type + ' ----- ' + item.url
+                })
+            })
+            // 设置Vue全局变量,应该还可以用window.a的方式的定义
+            Vue.prototype.GLOBALData = globalData
+        } 
+    </script>
+    <script src="layerName.json?cb=train"></script>
+
+    <!-- 设置了Vue的全局变量就可以访问这个json文件 -->
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                data6: [],
+                defaultProps: {
+                    children: 'children',
+                    label: 'name'
+                }
+            },
+            methods: {
+                handleDragStart(node, ev) {
+                console.log('drag start', node);
+                },
+                handleDragEnter(draggingNode, dropNode, ev) {
+                console.log('tree drag enter: ', dropNode.label);
+                },
+                handleDragLeave(draggingNode, dropNode, ev) {
+                console.log('tree drag leave: ', dropNode.label);
+                },
+                handleDragOver(draggingNode, dropNode, ev) {
+                console.log('tree drag over: ', dropNode.label);
+                },
+                handleDragEnd(draggingNode, dropNode, dropType, ev) {
+                console.log('tree drag end: ', dropNode && dropNode.label, dropType);
+                },
+                handleDrop(draggingNode, dropNode, dropType, ev) {
+                console.log('tree drop: ', dropNode.label, dropType);
+                },
+                allowDrop(draggingNode, dropNode, type) {
+                if (dropNode.data.label === '二级 3-1') {
+                    return type !== 'inner';
+                } else {
+                    return true;
+                }
+                },
+                allowDrag(draggingNode) {
+                return draggingNode.data.label.indexOf('三级 3-2-2') === -1;
+                }
+            },
+            mounted(){
+                this.data6 = this.GLOBALData
+                console.log(this.GLOBALData);
+            }
+        })
+    </script>
+</body>
+</html>
