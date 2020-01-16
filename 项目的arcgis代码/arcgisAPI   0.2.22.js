@@ -121,330 +121,6 @@ function read(wkt) {
 };
 instance.read = read;
 
-// wkt和点线面layer的转换
-instance.pointToWKT = function (geometry) {
-  return "POINT (" + geometry.x + " " + geometry.y + ")";
-};
-instance.polygonToWKT = function (geometry) {
-  var wkt = [];
-  var rings = geometry.rings;
-  for (var i in rings) {
-    var ring = rings[i];
-    for (var j in ring) {
-      var p = ring[j];
-      wkt.push(p.join(" "));
-    }
-  }
-  return "POLYGON ((" + wkt.join(",") + "))";
-};
-instance.lineToWKT = function (geometry) {
-  var wkt = [];
-  var paths = geometry.paths;
-  for (var i in paths) {
-    var path = paths[i];
-    for (var j in path) {
-      var p = path[j];
-      wkt.push(p.join(" "));
-    }
-  }
-  return "LINESTRING (" + wkt.join(",") + ")";
-};
-instance.wkbToPolyline = function (wkt, layer, style, attrubute) {
-  return instance.wktToPolyline(wkt, layer, style, attrubute)
-};
-instance.wktToPolyline = function (wkt, layer, style, attrubute) {
-  var points = read(wkt);
-  var polyline = instance.createPolyline(layer, [points], style, attrubute)
-  return polyline;
-};
-instance.wktToPoint = function (wkt, spatialreference) {
-  /**
-   *wkt转化成arcgis的Point对象
-   * @param wkt
-   * @returns {Polyline}
-   * @constructor
-   */
-  var pt = read(wkt);
-  var point = new instance.createPoint(pt[0], pt[1], spatialreference);
-  return point;
-};
-instance.wktToPolygon = function (wkt, spatialreference, attributes) {
-  var points = read(wkt);
-  var json = {
-    rings: points,
-    spatialReference: spatialreference
-  }
-  var polygon = new instance.Polygon(json);
-  return polygon;
-}
-instance.wktToPolygonLayer = function (wkt, layer, style, attributes) {
-  var points = read(wkt);
-  if (!style) {
-    style = {
-      color: [41, 0, 255, 0.8],
-      outline: { // autocasts as new SimpleLineSymbol()
-        color: [255, 255, 255],
-        width: 1
-      }
-    };
-  }
-  var polygon = instance.createPolygon(layer, points, style, attributes);
-  return polygon;
-};
-
-//画线
-instance.enableCreateLine = function (view, lineLayer, labelLayer, completeIcon, cbData) {
-  var draw = new instance.Draw({
-    view: view
-  });
-
-  var action = draw.create("polyline", {mode: "click"});
-
-  action.on("vertex-add", createGraphic);
-  action.on("cursor-update", createGraphic);
-  action.on("draw-complete", createGraphic);
-  action.on("vertex-remove", createGraphic);
-
-  function createGraphic(evt) {
-    var vertices = evt.vertices;
-    lineLayer.removeAll();
-
-    var geometry = new instance.Polyline({
-      paths: vertices,
-      spatialReference: view.spatialReference
-    });
-    //距离
-    var distance = getDistance(geometry);
-
-    var graphic = new instance.Graphic({
-      geometry: geometry,
-      symbol: {
-        type: "simple-line",
-        // color: [237, 23, 128],//红色
-        color: [64, 158, 254],//蓝色
-        width: 2,
-        cap: "round",
-        join: "round",
-        text: distance
-      }
-    });
-    var cbGraphicArr = [];
-
-    var paths = evt.vertices;
-    var ls = paths[paths.length - 1];
-    var point = new instance.Point({
-      longitude: ls[0],
-      latitude: ls[1],
-      spatialReference: view.spatialReference
-    });
-
-    var graphiciComplete = setPoint(evt, distance, "labelDistance");//实时显示距离
-
-    var graphicArray = [];
-    if (!!labelLayer) {
-      if (evt.type === 'vertex-add') {
-        graphicArray = setPoint(evt, distance, "breakPoint");
-      } else if (evt.type === "draw-complete") {
-        lineLayer.remove(graphiciComplete);//去除默认文字
-        if (graphicArray.length == 0) {
-          setPoint(evt, distance, "breakPoint");
-        }
-        var num = getSize(distance) + 30;
-        instance.addSearchBtn(point, labelLayer, completeIcon, "receive-line", num);//添加查询按钮
-      }
-    } else {//处理单独测距功能
-      // var params = setPoint(evt, distance, "labelDistance");
-      if (evt.type == "draw-complete") {
-        cbGraphicArr = [graphic, ...graphiciComplete[0]];
-      }
-    }
-    if (cbData) {
-      cbData(evt, distance, cbGraphicArr);//返回测距的距离
-    }
-    lineLayer.add(graphic);
-
-  }
-
-  //Calculating distance
-  function getDistance(geometry) {
-    var geo = instance.webMercatorUtils.webMercatorToGeographic(geometry);
-    var Length = instance.geodesicUtils.geodesicLengths([geo], instance.units.METERS);
-    var length = parseFloat(Length[0]);
-    if (length >= 1000) {
-      length = (length / 1000).toFixed(2) + '千米';
-    } else if (length > 0 && length < 1000) {
-      length = length.toFixed(2) + "米";
-    } else {
-      length = "起点";
-    }
-    return length;
-  };
-
-  //计算背景色的宽度
-  function getSize(distance) {
-    var _len = '';
-    if (distance == "起点") {
-      _len = distance.toString().length * 12 + 10;
-    } else {
-      _len = (distance.toString().length - 1) * 12;
-    }
-    return _len;
-  }
-
-  //添加和显示graphic
-  function setPoint(evt, distance, type) {
-    var paths = evt.vertices;
-    var ls = paths[paths.length - 1];
-    var point = new instance.Point({
-      longitude: ls[0],
-      latitude: ls[1],
-      spatialReference: view.spatialReference
-    });
-    var _len = getSize(distance);
-    var graphic1 = new instance.Graphic({
-      geometry: point,
-      symbol: {
-        type: "text",
-        // color: [237, 23, 128],//红色
-        // color: [255, 255, 255],//白色
-        color: [51, 51, 51],//黑色
-        text: distance,
-        xoffset: _len / 2 + 10 + "px",
-        yoffset: "-5px",
-        font: {
-          size: "12px",
-          family: "sans-serif"
-        }
-      }
-    });
-
-    var markerSymbol3 = new instance.PictureMarkerSymbol({
-      url: "./css/images/lableBG.png",
-      width: _len + "px",
-      height: "25px",
-      xoffset: _len / 2 + 10 + "px",
-      yoffset: 0,
-    });
-    var graphic3 = new instance.Graphic({
-      geometry: point,
-      symbol: markerSymbol3
-    });
-    var returnGraphic;
-    if (type == "labelDistance") {
-      lineLayer.addMany([graphic3, graphic1]);
-      returnGraphic = [graphic3, graphic1];
-    } else if (type == "breakPoint") {
-      console.log("breakPoint")
-      var markerSymbol2 = new instance.PictureMarkerSymbol({
-        url: "./css/images/circle.png",
-        width: "15px",
-        height: "15px"
-      });
-      var graphic2 = new instance.Graphic({
-        geometry: point,
-        symbol: markerSymbol2
-      });
-      returnGraphic = [graphic2, graphic3, graphic1];
-      labelLayer.addMany(returnGraphic);
-    }
-    return [returnGraphic, _len];
-  }
-
-  return action;
-};
-//添加查询按钮
-instance.addSearchBtn = function (point, layer, iconUrl, type, num, num2) {
-  var markerSymbol_ = new instance.PictureMarkerSymbol({
-    url: iconUrl,
-    width: "30px",
-    height: "30px",
-    yoffset: !!num2 ? num2 : 0,
-    xoffset: num + "px"
-  });
-  var graphic3 = new instance.Graphic({
-    geometry: point,
-    symbol: markerSymbol_,
-    attributes: {
-      "facilityType": type
-    }
-  });
-  layer.add(graphic3);
-};
-
-instance.createFacilityPoints = function (graLayer, facilityConfig, subFacilities, defaultHidden) {
-  var imgObj = {
-    width: "24px",
-    height: "32px",
-    yoffset: 16
-  };
-  var legendIcon;
-  var graphics = [];
-  subFacilities.forEach(function (facility) {
-    if (facility.onlineState == false) {//优先判断是否在线
-      legendIcon = facilityConfig.icon.split("-")[0] + '-00';
-    }
-    else if (facility.state === 1) {
-      legendIcon = facilityConfig.icon.split("-")[0] + '-02';
-    } else if (facility.state === 2) {
-      legendIcon = facilityConfig.icon.split("-")[0] + '-03';
-    } else if (facility.state === 3) {
-      legendIcon = facilityConfig.icon.split("-")[0] + '-04';
-    } else {
-      legendIcon = facilityConfig.icon;
-    }
-    if (facilityConfig.facilityTypeName == 'WQ') {
-      legendIcon = facilityConfig.icon.split("-")[0] + '-02';
-    }
-    var newIcon = './img/mapLegend/facility/' + legendIcon + '.png';
-    imgObj.url = newIcon;
-    var attributes = {
-      'item': facility,
-      'facilityTypeName': facilityConfig.facilityTypeName,
-      'id': facility.imei
-    };
-    if (!!facility.x && facility.y) {
-      var graphic;
-      if (defaultHidden) {
-        graphic = instance.createPictureMarkSymbol(null, facility.x, facility.y, imgObj, attributes);// defaultHidden 默认不显示的测站不添加进图层
-      } else {
-        graphic = instance.createPictureMarkSymbol(graLayer, facility.x, facility.y, imgObj, attributes);
-      }
-      graphics.push(graphic)
-    }
-  })
-  if (!facilityConfig.graphics) {
-    //为了第一次初始化时加载
-    facilityConfig.graphics = graphics;
-  }
-};
-instance.refreshFacilityLayer = function (map, configHelper, cb) {
-  if (configHelper.getFacilityConfig().length > 0) {
-    var facilities = configHelper.getFacilityConfig();
-    var counter = facilities.length;
-    var graLayer = map.findLayerById('facility-graphicLayer');
-    graLayer.removeAll();
-    facilities.forEach(function (facilityConfig, index) {
-      var url = facilityConfig.layer.url;
-      var facilityTypeName = facilityConfig.layer.funId;
-      facilityConfig.icon = facilityConfig.layer.icon1;
-      facilityConfig.facilityTypeName = facilityTypeName;
-      var isShow = facilityConfig.layer.display == 1;
-      mapService.getFacilityByTypeName(facilityTypeName, url, function (subFacilities) {
-        counter--;
-        if (isShow) {
-          instance.createFacilityPoints(graLayer, facilityConfig, subFacilities);
-        }
-        facilityModel.addFacility(facilityConfig, subFacilities);
-        if (counter == 0) {
-          //get all data;
-          cb(facilityModel);
-        }
-      })
-    });
-  } else {
-    cb();
-  }
-}
 
 //地图初始化配置
 instance.initMapWithConfig = function (container, configHelper, cb, click, isFirstInit, projectId) {
@@ -860,6 +536,332 @@ instance.initBDLayer = function (layerType) {
   });
   return [tiledLayer];
 };
+
+// wkt和点线面layer的转换
+instance.pointToWKT = function (geometry) {
+  return "POINT (" + geometry.x + " " + geometry.y + ")";
+};
+instance.polygonToWKT = function (geometry) {
+  var wkt = [];
+  var rings = geometry.rings;
+  for (var i in rings) {
+    var ring = rings[i];
+    for (var j in ring) {
+      var p = ring[j];
+      wkt.push(p.join(" "));
+    }
+  }
+  return "POLYGON ((" + wkt.join(",") + "))";
+};
+instance.lineToWKT = function (geometry) {
+  var wkt = [];
+  var paths = geometry.paths;
+  for (var i in paths) {
+    var path = paths[i];
+    for (var j in path) {
+      var p = path[j];
+      wkt.push(p.join(" "));
+    }
+  }
+  return "LINESTRING (" + wkt.join(",") + ")";
+};
+instance.wkbToPolyline = function (wkt, layer, style, attrubute) {
+  return instance.wktToPolyline(wkt, layer, style, attrubute)
+};
+instance.wktToPolyline = function (wkt, layer, style, attrubute) {
+  var points = read(wkt);
+  var polyline = instance.createPolyline(layer, [points], style, attrubute)
+  return polyline;
+};
+instance.wktToPoint = function (wkt, spatialreference) {
+  /**
+   *wkt转化成arcgis的Point对象
+   * @param wkt
+   * @returns {Polyline}
+   * @constructor
+   */
+  var pt = read(wkt);
+  var point = new instance.createPoint(pt[0], pt[1], spatialreference);
+  return point;
+};
+instance.wktToPolygon = function (wkt, spatialreference, attributes) {
+  var points = read(wkt);
+  var json = {
+    rings: points,
+    spatialReference: spatialreference
+  }
+  var polygon = new instance.Polygon(json);
+  return polygon;
+}
+instance.wktToPolygonLayer = function (wkt, layer, style, attributes) {
+  var points = read(wkt);
+  if (!style) {
+    style = {
+      color: [41, 0, 255, 0.8],
+      outline: { // autocasts as new SimpleLineSymbol()
+        color: [255, 255, 255],
+        width: 1
+      }
+    };
+  }
+  var polygon = instance.createPolygon(layer, points, style, attributes);
+  return polygon;
+};
+
+//画线
+instance.enableCreateLine = function (view, lineLayer, labelLayer, completeIcon, cbData) {
+  var draw = new instance.Draw({
+    view: view
+  });
+
+  var action = draw.create("polyline", {mode: "click"});
+
+  action.on("vertex-add", createGraphic);
+  action.on("cursor-update", createGraphic);
+  action.on("draw-complete", createGraphic);
+  action.on("vertex-remove", createGraphic);
+
+  function createGraphic(evt) {
+    var vertices = evt.vertices;
+    lineLayer.removeAll();
+
+    var geometry = new instance.Polyline({
+      paths: vertices,
+      spatialReference: view.spatialReference
+    });
+    //距离
+    var distance = getDistance(geometry);
+
+    var graphic = new instance.Graphic({
+      geometry: geometry,
+      symbol: {
+        type: "simple-line",
+        // color: [237, 23, 128],//红色
+        color: [64, 158, 254],//蓝色
+        width: 2,
+        cap: "round",
+        join: "round",
+        text: distance
+      }
+    });
+    var cbGraphicArr = [];
+
+    var paths = evt.vertices;
+    var ls = paths[paths.length - 1];
+    var point = new instance.Point({
+      longitude: ls[0],
+      latitude: ls[1],
+      spatialReference: view.spatialReference
+    });
+
+    var graphiciComplete = setPoint(evt, distance, "labelDistance");//实时显示距离
+
+    var graphicArray = [];
+    if (!!labelLayer) {
+      if (evt.type === 'vertex-add') {
+        graphicArray = setPoint(evt, distance, "breakPoint");
+      } else if (evt.type === "draw-complete") {
+        lineLayer.remove(graphiciComplete);//去除默认文字
+        if (graphicArray.length == 0) {
+          setPoint(evt, distance, "breakPoint");
+        }
+        var num = getSize(distance) + 30;
+        instance.addSearchBtn(point, labelLayer, completeIcon, "receive-line", num);//添加查询按钮
+      }
+    } else {//处理单独测距功能
+      // var params = setPoint(evt, distance, "labelDistance");
+      if (evt.type == "draw-complete") {
+        cbGraphicArr = [graphic, ...graphiciComplete[0]];
+      }
+    }
+    if (cbData) {
+      cbData(evt, distance, cbGraphicArr);//返回测距的距离
+    }
+    lineLayer.add(graphic);
+
+  }
+
+  //Calculating distance
+  function getDistance(geometry) {
+    var geo = instance.webMercatorUtils.webMercatorToGeographic(geometry);
+    var Length = instance.geodesicUtils.geodesicLengths([geo], instance.units.METERS);
+    var length = parseFloat(Length[0]);
+    if (length >= 1000) {
+      length = (length / 1000).toFixed(2) + '千米';
+    } else if (length > 0 && length < 1000) {
+      length = length.toFixed(2) + "米";
+    } else {
+      length = "起点";
+    }
+    return length;
+  };
+
+  //计算背景色的宽度
+  function getSize(distance) {
+    var _len = '';
+    if (distance == "起点") {
+      _len = distance.toString().length * 12 + 10;
+    } else {
+      _len = (distance.toString().length - 1) * 12;
+    }
+    return _len;
+  }
+
+  //添加和显示graphic
+  function setPoint(evt, distance, type) {
+    var paths = evt.vertices;
+    var ls = paths[paths.length - 1];
+    var point = new instance.Point({
+      longitude: ls[0],
+      latitude: ls[1],
+      spatialReference: view.spatialReference
+    });
+    var _len = getSize(distance);
+    var graphic1 = new instance.Graphic({
+      geometry: point,
+      symbol: {
+        type: "text",
+        // color: [237, 23, 128],//红色
+        // color: [255, 255, 255],//白色
+        color: [51, 51, 51],//黑色
+        text: distance,
+        xoffset: _len / 2 + 10 + "px",
+        yoffset: "-5px",
+        font: {
+          size: "12px",
+          family: "sans-serif"
+        }
+      }
+    });
+
+    var markerSymbol3 = new instance.PictureMarkerSymbol({
+      url: "./css/images/lableBG.png",
+      width: _len + "px",
+      height: "25px",
+      xoffset: _len / 2 + 10 + "px",
+      yoffset: 0,
+    });
+    var graphic3 = new instance.Graphic({
+      geometry: point,
+      symbol: markerSymbol3
+    });
+    var returnGraphic;
+    if (type == "labelDistance") {
+      lineLayer.addMany([graphic3, graphic1]);
+      returnGraphic = [graphic3, graphic1];
+    } else if (type == "breakPoint") {
+      console.log("breakPoint")
+      var markerSymbol2 = new instance.PictureMarkerSymbol({
+        url: "./css/images/circle.png",
+        width: "15px",
+        height: "15px"
+      });
+      var graphic2 = new instance.Graphic({
+        geometry: point,
+        symbol: markerSymbol2
+      });
+      returnGraphic = [graphic2, graphic3, graphic1];
+      labelLayer.addMany(returnGraphic);
+    }
+    return [returnGraphic, _len];
+  }
+
+  return action;
+};
+//添加查询按钮
+instance.addSearchBtn = function (point, layer, iconUrl, type, num, num2) {
+  var markerSymbol_ = new instance.PictureMarkerSymbol({
+    url: iconUrl,
+    width: "30px",
+    height: "30px",
+    yoffset: !!num2 ? num2 : 0,
+    xoffset: num + "px"
+  });
+  var graphic3 = new instance.Graphic({
+    geometry: point,
+    symbol: markerSymbol_,
+    attributes: {
+      "facilityType": type
+    }
+  });
+  layer.add(graphic3);
+};
+
+instance.createFacilityPoints = function (graLayer, facilityConfig, subFacilities, defaultHidden) {
+  var imgObj = {
+    width: "24px",
+    height: "32px",
+    yoffset: 16
+  };
+  var legendIcon;
+  var graphics = [];
+  subFacilities.forEach(function (facility) {
+    if (facility.onlineState == false) {//优先判断是否在线
+      legendIcon = facilityConfig.icon.split("-")[0] + '-00';
+    }
+    else if (facility.state === 1) {
+      legendIcon = facilityConfig.icon.split("-")[0] + '-02';
+    } else if (facility.state === 2) {
+      legendIcon = facilityConfig.icon.split("-")[0] + '-03';
+    } else if (facility.state === 3) {
+      legendIcon = facilityConfig.icon.split("-")[0] + '-04';
+    } else {
+      legendIcon = facilityConfig.icon;
+    }
+    if (facilityConfig.facilityTypeName == 'WQ') {
+      legendIcon = facilityConfig.icon.split("-")[0] + '-02';
+    }
+    var newIcon = './img/mapLegend/facility/' + legendIcon + '.png';
+    imgObj.url = newIcon;
+    var attributes = {
+      'item': facility,
+      'facilityTypeName': facilityConfig.facilityTypeName,
+      'id': facility.imei
+    };
+    if (!!facility.x && facility.y) {
+      var graphic;
+      if (defaultHidden) {
+        graphic = instance.createPictureMarkSymbol(null, facility.x, facility.y, imgObj, attributes);// defaultHidden 默认不显示的测站不添加进图层
+      } else {
+        graphic = instance.createPictureMarkSymbol(graLayer, facility.x, facility.y, imgObj, attributes);
+      }
+      graphics.push(graphic)
+    }
+  })
+  if (!facilityConfig.graphics) {
+    //为了第一次初始化时加载
+    facilityConfig.graphics = graphics;
+  }
+};
+instance.refreshFacilityLayer = function (map, configHelper, cb) {
+  if (configHelper.getFacilityConfig().length > 0) {
+    var facilities = configHelper.getFacilityConfig();
+    var counter = facilities.length;
+    var graLayer = map.findLayerById('facility-graphicLayer');
+    graLayer.removeAll();
+    facilities.forEach(function (facilityConfig, index) {
+      var url = facilityConfig.layer.url;
+      var facilityTypeName = facilityConfig.layer.funId;
+      facilityConfig.icon = facilityConfig.layer.icon1;
+      facilityConfig.facilityTypeName = facilityTypeName;
+      var isShow = facilityConfig.layer.display == 1;
+      mapService.getFacilityByTypeName(facilityTypeName, url, function (subFacilities) {
+        counter--;
+        if (isShow) {
+          instance.createFacilityPoints(graLayer, facilityConfig, subFacilities);
+        }
+        facilityModel.addFacility(facilityConfig, subFacilities);
+        if (counter == 0) {
+          //get all data;
+          cb(facilityModel);
+        }
+      })
+    });
+  } else {
+    cb();
+  }
+}
+
 
 // layer的操作： 获取、增加、删除、显示、隐藏
 instance.getLayerById = function (map, layerId) {
